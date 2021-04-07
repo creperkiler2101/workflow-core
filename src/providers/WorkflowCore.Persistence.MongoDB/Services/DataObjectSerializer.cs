@@ -60,7 +60,7 @@ namespace WorkflowCore.Persistence.MongoDB.Services
                     doc.InsertAt(0, new BsonElement("_t", GetTypeNameFromXPath(value, elementXPath)));
                     AddTypeInformation(doc.Elements, value, elementXPath);
                 }
-                if (element.Value.IsBsonArray)
+                else if (element.Value.IsBsonArray)
                 {
                     AddTypeInformation(element.Value.AsBsonArray, value, elementXPath);
                 }
@@ -89,8 +89,16 @@ namespace WorkflowCore.Persistence.MongoDB.Services
                 }
                 else
                 {
-                    var propInfo = value.GetType().GetProperty(subPath);
-                    value = propInfo.GetValue(value);
+                    var type = value.GetType();
+                    if (typeof(IDictionary).IsAssignableFrom(type))
+                    {
+                        value = type.GetMethod("get_Item").Invoke(value, new object[] { subPath });
+                    }
+                    else
+                    {
+                        var propInfo = value.GetType().GetProperty(subPath);
+                        value = propInfo.GetValue(value);
+                    }
                 }
 
                 parts.RemoveAt(0);
